@@ -25,7 +25,7 @@ Unity skeleton for an entertaining mobile learning game about reading and writin
      - `Stage1Panel`
    - A `ResourceCatalog` asset with downloadable items
 5. Assign references in the inspector.
-6. Set the splash panel to show the `J&J Games` title and a playful subtitle.
+6. Set the splash panel to show the `J&J Games` title and a subtitle.
 7. Create a reusable resource card prefab with `ResourceItemView`.
 8. Point each resource entry to a downloadable file or web link.
 9. Add a `Stage1` panel containing:
