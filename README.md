@@ -15,7 +15,9 @@ Unity skeleton for an entertaining mobile learning game about reading and writin
 1. Create a new Unity 3D project in Unity Hub.
 2. Copy the `Assets/` folder from this repo into the Unity project root.
 3. Open the project in Unity.
-4. Create these scene objects:
+4. Run `Tools > Chinese Zombie Hunter > Create Starter Scene` to generate the scene and default wiring from code.
+5. Open the generated scene at `Assets/Generated/Scenes/ChineseZombieHunterStarter.unity`.
+6. If you want to build manually instead, create these scene objects:
    - `GameFlow` with `JjGamesLauncher`
    - `ResourceHub` with `ResourceHubController`
    - `Stage1Root` with `Stage1Manager`
@@ -24,17 +26,17 @@ Unity skeleton for an entertaining mobile learning game about reading and writin
      - `ResourcesPanel`
      - `Stage1Panel`
    - A `ResourceCatalog` asset with downloadable items
-5. Assign references in the inspector.
-6. Set the splash panel to show the `J&J Games` title and a subtitle.
-7. Create a reusable resource card prefab with `ResourceItemView`.
-8. Point each resource entry to a downloadable file or web link.
-9. Add a `Stage1` panel containing:
+7. Assign references in the inspector.
+8. Set the splash panel to show the `J&J Games` title and a subtitle.
+9. Create a reusable resource card prefab with `ResourceItemView`.
+10. Point each resource entry to a downloadable file or web link.
+11. Add a `Stage1` panel containing:
    - `CharacterLessonPanel`
    - `BarrelChallengePanel`
    - `LifeDisplay`
    - `StageResultPanel`
    - `Stage1Barrel`
-10. Wire `JjGamesLauncher` so the splash can open the resource hub or the stage 1 panel.
+12. Wire `JjGamesLauncher` so the splash can open the resource hub or the stage 1 panel.
 
 ## Recommended hierarchy
 

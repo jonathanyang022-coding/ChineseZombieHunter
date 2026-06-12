@@ -131,6 +131,11 @@ namespace ChineseZombieHunter
 
         public void ShowStage1()
         {
+            ShowStage1(false);
+        }
+
+        public void ShowStage1(bool skipLessonFlow)
+        {
             if (splashRoutine != null)
             {
                 StopCoroutine(splashRoutine);
@@ -143,14 +148,14 @@ namespace ChineseZombieHunter
 
             if (stage1Manager != null)
             {
-                stage1Manager.StartStage();
+                stage1Manager.StartStage(skipLessonFlow);
             }
         }
 
         private IEnumerator AutoAdvance()
         {
             yield return new WaitForSecondsRealtime(splashDuration);
-            ShowResources();
+            ShowStage1(true);
         }
 
         private void SetPanelState(CanvasGroup panel, bool visible)

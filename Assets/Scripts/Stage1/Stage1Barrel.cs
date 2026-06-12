@@ -33,7 +33,7 @@ namespace ChineseZombieHunter
                 return;
             }
 
-            travelRoot.position += Vector3.forward * (moveSpeed * Time.deltaTime);
+            travelRoot.position += Vector3.back * (moveSpeed * Time.deltaTime);
         }
 
         public void ResetEncounter(string label)

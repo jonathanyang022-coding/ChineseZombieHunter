@@ -22,6 +22,7 @@ namespace ChineseZombieHunter
         [Header("UI Views")]
         [SerializeField] private CharacterLessonPanel lessonPanel;
         [SerializeField] private BarrelChallengePanel challengePanel;
+        [SerializeField] private HandwritingPracticePanel handwritingPanel;
         [SerializeField] private LifeDisplay lifeDisplay;
         [SerializeField] private StageResultPanel resultPanel;
         [SerializeField] private Stage1Barrel barrelView;
@@ -58,13 +59,26 @@ namespace ChineseZombieHunter
 
         public void StartStage()
         {
+            StartStage(false);
+        }
+
+        public void StartStage(bool skipLessonFlow)
+        {
             EnsureState();
 
             StopAdvanceRoutine();
 
             challengeIndex = 0;
             stageState.Retry();
+            handwritingPanel?.ClearPad();
             BuildChallengeOrder();
+
+            if (skipLessonFlow)
+            {
+                BeginChallenge();
+                return;
+            }
+
             ShowLesson();
         }
 
@@ -95,6 +109,7 @@ namespace ChineseZombieHunter
 
             bool isFinalLesson = stageState.LessonIndex >= stageState.LessonCount - 1;
             lessonPanel.Show(stageState.CurrentLesson, isFinalLesson, OnLessonContinuePressed);
+            handwritingPanel?.Show(stageState.CurrentLesson);
 
             if (lifeDisplay != null)
             {
@@ -134,6 +149,7 @@ namespace ChineseZombieHunter
             challengePanel.SetPrompt("Pick the matching Chinese character.");
             challengePanel.ShowFeedback(string.Empty);
             challengePanel.SetChoiceButtonsInteractable(true);
+            handwritingPanel?.Show(stageState.CurrentLesson);
 
             if (lifeDisplay != null)
             {
