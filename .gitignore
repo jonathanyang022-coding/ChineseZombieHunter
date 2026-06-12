@@ -7,20 +7,42 @@ UserSettings/
 Build/
 Builds/
 MemoryCaptures/
+Recordings/
+CrashReports/
 
-# Visual Studio / Rider
-.vs/
-.idea/
+# Unity generated files
 *.csproj
 *.sln
-*.suo
+*.slnx
 *.user
 *.userprefs
 *.pidb
 *.booproj
 *.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.stackdump
+
+# Build outputs
+*.apk
+*.aab
+*.app
+*.ipa
+*.unitypackage
+
+# Visual Studio / Rider / JetBrains
+.vs/
+.idea/
+*.DotSettings.user
 
 # OS files
 .DS_Store
 Thumbs.db
 
+# Misc temporary files
+*.log
+*.tmp
+*.bak
+*.orig
