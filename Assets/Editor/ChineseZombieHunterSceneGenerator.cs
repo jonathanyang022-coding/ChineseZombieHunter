@@ -67,7 +67,6 @@ namespace ChineseZombieHunter.EditorTools
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             canvasObject.AddComponent<GraphicRaycaster>();
 
-            GameObject splashPanel = CreatePanel(canvasObject.transform, "SplashPanel", new Color(0.10f, 0.12f, 0.18f, 0.96f));
             GameObject resourcesPanel = CreatePanel(canvasObject.transform, "ResourcesPanel", new Color(0.12f, 0.14f, 0.10f, 0.96f));
             GameObject stage1Panel = CreatePanel(canvasObject.transform, "Stage1Panel", new Color(0.12f, 0.10f, 0.14f, 0.00f));
 
@@ -82,7 +81,6 @@ namespace ChineseZombieHunter.EditorTools
 
             GameObject worldStageRoot = new GameObject("WorldStageRoot");
 
-            BuildSplashPanel(splashPanel.transform, out RectTransform logoRoot, out Text titleText, out Text subtitleText, out Button continueButton);
             BuildResourcesPanel(resourcesPanel.transform, out Transform resourceContentRoot, out Text emptyStateText, out Button stage1Button, out Button backButton, out ResourceItemView resourceItemView);
             BuildStage1Panel(stage1Panel.transform, out CanvasGroup lessonGroup, out CanvasGroup challengeGroup, out CanvasGroup resultGroup, out CharacterLessonPanel lessonPanel, out BarrelChallengePanel challengePanel, out HandwritingPracticePanel handwritingPanel, out LifeDisplay lifeDisplay, out StageResultPanel resultPanel, out Stage1Barrel barrelView);
             barrelView.transform.SetParent(worldStageRoot.transform, true);
@@ -93,13 +91,8 @@ namespace ChineseZombieHunter.EditorTools
             AssignSerializedReference(resourceHubController, "itemPrefab", resourceItemView);
             AssignSerializedReference(resourceHubController, "emptyStateText", emptyStateText);
 
-            AssignSerializedReference(launcher, "splashPanel", splashPanel.GetComponent<CanvasGroup>());
             AssignSerializedReference(launcher, "resourcesPanel", resourcesPanel.GetComponent<CanvasGroup>());
             AssignSerializedReference(launcher, "stage1Panel", stage1Panel.GetComponent<CanvasGroup>());
-            AssignSerializedReference(launcher, "logoRoot", logoRoot);
-            AssignSerializedReference(launcher, "titleText", titleText);
-            AssignSerializedReference(launcher, "subtitleText", subtitleText);
-            AssignSerializedReference(launcher, "continueButton", continueButton);
             AssignSerializedReference(launcher, "stage1Button", stage1Button);
             AssignSerializedReference(launcher, "backToResourcesButton", backButton);
             AssignSerializedReference(launcher, "stage1Manager", stage1Manager);
@@ -122,37 +115,6 @@ namespace ChineseZombieHunter.EditorTools
 
             EditorSceneManager.OpenScene(ScenePath);
             Selection.activeObject = gameFlow;
-        }
-
-        private static void BuildSplashPanel(Transform parent, out RectTransform logoRoot, out Text titleText, out Text subtitleText, out Button continueButton)
-        {
-            GameObject panel = parent.gameObject;
-            CanvasGroup group = panel.GetComponent<CanvasGroup>();
-            group.alpha = 1f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
-
-            RectTransform panelRect = panel.GetComponent<RectTransform>();
-            Stretch(panelRect);
-
-            GameObject logo = new GameObject("Logo");
-            logo.transform.SetParent(parent, false);
-            logoRoot = logo.AddComponent<RectTransform>();
-            SetAnchoredRect(logoRoot, new Vector2(0.5f, 0.72f), new Vector2(0.5f, 0.72f), new Vector2(600f, 180f), Vector2.zero);
-
-            Image logoImage = logo.AddComponent<Image>();
-            logoImage.color = new Color(0.92f, 0.63f, 0.20f, 0.98f);
-            Text logoText = CreateText(logo.transform, "LogoText", "J&J", 66, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-            Stretch(logoText.rectTransform);
-
-            titleText = CreateText(parent, "TitleText", "J&J Games", 54, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-            SetAnchoredRect(titleText.rectTransform, new Vector2(0.5f, 0.54f), new Vector2(0.5f, 0.54f), new Vector2(760f, 120f), Vector2.zero);
-
-            subtitleText = CreateText(parent, "SubtitleText", "Play. Learn. Level up.", 30, FontStyle.Normal, TextAnchor.MiddleCenter, new Color(0.94f, 0.94f, 0.94f, 0.95f));
-            SetAnchoredRect(subtitleText.rectTransform, new Vector2(0.5f, 0.47f), new Vector2(0.5f, 0.47f), new Vector2(760f, 90f), Vector2.zero);
-
-            continueButton = CreateButton(parent, "ContinueButton", "Continue");
-            SetAnchoredRect(continueButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.30f), new Vector2(0.5f, 0.30f), new Vector2(360f, 92f), Vector2.zero);
         }
 
         private static void BuildResourcesPanel(Transform parent, out Transform contentRoot, out Text emptyStateText, out Button stage1Button, out Button backButton, out ResourceItemView resourceItemView)
@@ -194,7 +156,7 @@ namespace ChineseZombieHunter.EditorTools
             stage1Button = CreateButton(parent, "Stage1Button", "Open Stage 1");
             SetAnchoredRect(stage1Button.GetComponent<RectTransform>(), new Vector2(0.25f, 0.06f), new Vector2(0.50f, 0.06f), new Vector2(320f, 88f), Vector2.zero);
 
-            backButton = CreateButton(parent, "BackButton", "Back to Splash");
+            backButton = CreateButton(parent, "BackButton", "Back to Resources");
             SetAnchoredRect(backButton.GetComponent<RectTransform>(), new Vector2(0.56f, 0.06f), new Vector2(0.81f, 0.06f), new Vector2(320f, 88f), Vector2.zero);
 
             resourceItemView = CreateResourceItemPrefab();
@@ -237,11 +199,11 @@ namespace ChineseZombieHunter.EditorTools
             AssignSerializedReference(challengePanel, "answerButtons", answerButtons);
             AssignSerializedReference(challengePanel, "answerButtonTexts", answerTexts);
 
-            GameObject handwritingPanelObject = CreatePanel(parent, "HandwritingPanel", new Color(0.96f, 0.95f, 0.91f, 0.88f));
+            GameObject handwritingPanelObject = CreatePanel(parent, "HandwritingPanel", new Color(0.98f, 0.97f, 0.94f, 0.96f));
             handwritingPanelObject.GetComponent<Image>().raycastTarget = false;
             RectTransform handwritingRect = handwritingPanelObject.GetComponent<RectTransform>();
-            handwritingRect.anchorMin = new Vector2(0.56f, 0.18f);
-            handwritingRect.anchorMax = new Vector2(0.95f, 0.78f);
+            handwritingRect.anchorMin = new Vector2(0.66f, 0.20f);
+            handwritingRect.anchorMax = new Vector2(0.94f, 0.74f);
             handwritingRect.offsetMin = Vector2.zero;
             handwritingRect.offsetMax = Vector2.zero;
             handwritingRect.pivot = new Vector2(0.5f, 0.5f);
@@ -358,8 +320,8 @@ namespace ChineseZombieHunter.EditorTools
             GameObject padObject = new GameObject("Pad");
             padObject.transform.SetParent(parent, false);
             RectTransform padRect = padObject.AddComponent<RectTransform>();
-            padRect.anchorMin = new Vector2(0.08f, 0.20f);
-            padRect.anchorMax = new Vector2(0.92f, 0.70f);
+            padRect.anchorMin = new Vector2(0.06f, 0.20f);
+            padRect.anchorMax = new Vector2(0.94f, 0.70f);
             padRect.offsetMin = Vector2.zero;
             padRect.offsetMax = Vector2.zero;
             handwritingPad = padObject.AddComponent<HandwritingPad>();

@@ -74,6 +74,7 @@ namespace ChineseZombieHunter
             if (lastPoint.HasValue)
             {
                 DrawDot(lastPoint.Value);
+                texture.Apply();
             }
         }
 
@@ -92,6 +93,7 @@ namespace ChineseZombieHunter
             else
             {
                 DrawDot(currentPoint.Value);
+                texture.Apply();
             }
 
             lastPoint = currentPoint;
