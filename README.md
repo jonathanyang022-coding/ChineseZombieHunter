@@ -5,7 +5,7 @@ Unity skeleton for an entertaining mobile learning game about reading and writin
 ## What is included
 
 - A clean folder layout for gameplay code
-- Core scripts for a playful splash screen, resource hub, and card-based download page
+- Core scripts for a splash screen, resource hub, and card-based download page
 - A lightweight UI flow that can be wired to mobile controls later
 - A resource catalog system for downloadable character sheets, stroke guides, and audio files
 - A stage 1 lesson flow that teaches `一`, `二`, and `三` and then runs a one-lane barrel challenge
