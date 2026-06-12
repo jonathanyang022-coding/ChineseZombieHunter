@@ -1,6 +1,6 @@
 # ChineseZombieHunter
 
-Unity skeleton for a playful mobile learning game about reading and writing Chinese characters.
+Unity skeleton for an entertaining mobile learning game about reading and writing Chinese characters.
 
 ## What is included
 
