@@ -6,13 +6,33 @@ public class Stage1TrackBuilder : MonoBehaviour
     [SerializeField] private int segmentCount = 16;
     [SerializeField] private float segmentLength = 4f;
     [SerializeField] private float scrollSpeed = 5f;
+    [SerializeField] private float recycleThresholdFactor = 0.0f;
     [SerializeField] private float trackWidth = 6f;
+    [SerializeField] private float wallThickness = 0.25f;
+    [SerializeField] private float wallHeight = 1.8f;
+    [SerializeField] private float laneOffset = 1.6f;
+    [SerializeField] private float trackYOffset = 1f;
 
     [SerializeField] private Color floorColor = new Color(0.22f, 0.23f, 0.26f);
     [SerializeField] private Color obstacleColor = new Color(0.08f, 0.55f, 0.08f);
 
     private readonly List<Transform> segments = new List<Transform>();
-    private readonly List<int> segmentCycles = new List<int>();
+    private int nextSegmentId;
+
+    private void OnEnable()
+    {
+        RebuildTrack();
+    }
+
+    private void OnValidate()
+    {
+        if (!isActiveAndEnabled)
+        {
+            return;
+        }
+
+        RebuildTrack();
+    }
 
     private void Awake()
     {
@@ -29,6 +49,7 @@ public class Stage1TrackBuilder : MonoBehaviour
 
     private void RebuildTrack()
     {
+        nextSegmentId = 0;
         ClearTrack();
         BuildTrack();
     }
@@ -36,7 +57,6 @@ public class Stage1TrackBuilder : MonoBehaviour
     private void ClearTrack()
     {
         segments.Clear();
-        segmentCycles.Clear();
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
@@ -56,20 +76,26 @@ public class Stage1TrackBuilder : MonoBehaviour
     {
         for (int i = 0; i < segmentCount; i++)
         {
-            CreateSegment(i);
+            CreateSegment(nextSegmentId++, i * GetSegmentStep());
         }
     }
 
-    private void CreateSegment(int index)
+    private void CreateSegment(int segmentId, float zPosition)
     {
-        GameObject segmentRoot = new GameObject(string.Format("TrackSegment_{0:00}", index));
+        GameObject segmentRoot = new GameObject(string.Format("TrackSegment_{0:00}", segmentId));
         segmentRoot.transform.SetParent(transform, false);
-        segmentRoot.transform.localPosition = new Vector3(0f, 0f, index * segmentLength);
+        segmentRoot.transform.localPosition = new Vector3(0f, trackYOffset, zPosition);
         segments.Add(segmentRoot.transform);
-        segmentCycles.Add(0);
 
         CreateFloor(segmentRoot.transform);
-        CreateObstacleField(segmentRoot.transform, index, 0);
+        CreateWalls(segmentRoot.transform);
+        CreateLaneMarkers(segmentRoot.transform);
+
+        int obstaclePattern = segmentId % 9;
+        if (obstaclePattern == 4 || obstaclePattern == 7 || obstaclePattern == 8)
+        {
+            CreateObstacle(segmentRoot.transform, (segmentId % 3) - 1);
+        }
     }
 
     private void CreateFloor(Transform parent)
@@ -82,40 +108,10 @@ public class Stage1TrackBuilder : MonoBehaviour
         SetColor(floor, floorColor);
     }
 
-    private void CreateObstacleField(Transform parent, int segmentIndex, int cycleIndex)
-    {
-        if (segmentIndex < 2)
-        {
-            return;
-        }
-
-        float[] xPositions = { -2.0f, -1.0f, 0f, 1.0f, 2.0f };
-        float[] zOffsets = { 0.85f, 1.65f, 2.45f, 3.25f };
-        int obstacleCount = 2 + ((segmentIndex + cycleIndex) % 3);
-        System.Random random = CreateRandom(parent.name, segmentIndex, cycleIndex);
-        List<int> availableLanes = new List<int> { 0, 1, 2, 3, 4 };
-
-        for (int i = 0; i < obstacleCount && availableLanes.Count > 0; i++)
-        {
-            int lanePick = random.Next(availableLanes.Count);
-            int laneIndex = availableLanes[lanePick];
-            availableLanes.RemoveAt(lanePick);
-
-            int depthPick = random.Next(zOffsets.Length);
-            CreateObstacle(parent, xPositions[laneIndex], zOffsets[depthPick]);
-        }
-    }
-
-    private static System.Random CreateRandom(string segmentName, int segmentIndex, int cycleIndex)
-    {
-        int seed = (segmentIndex + 1) * 1009 + cycleIndex * 131 + segmentName.GetHashCode();
-        return new System.Random(seed);
-    }
-
     private void CreateObstacle(Transform parent, float xPosition, float zPosition)
     {
         GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        obstacle.name = "Obstacle";
+        obstacle.name = "GreenTile";
         obstacle.transform.SetParent(parent, false);
         obstacle.transform.localScale = new Vector3(0.8f, 1.0f, 0.8f);
         obstacle.transform.localPosition = new Vector3(xPosition, 0.5f, zPosition);
@@ -132,52 +128,58 @@ public class Stage1TrackBuilder : MonoBehaviour
         }
 
         SetColor(obstacle, obstacleColor);
+        obstacle.AddComponent<Stage1GreenTileTarget>();
     }
 
     private void ScrollTrack()
     {
+        float step = GetSegmentStep();
         float moveDistance = scrollSpeed * Time.deltaTime;
-        float wrapDistance = segmentCount * segmentLength;
-        float recycleThreshold = -segmentLength;
+        float recycleThreshold = -segmentLength * Mathf.Clamp01(recycleThresholdFactor);
 
         for (int i = 0; i < segments.Count; i++)
         {
             Transform segment = segments[i];
             Vector3 localPosition = segment.localPosition;
             localPosition.z -= moveDistance;
-
-            while (localPosition.z <= recycleThreshold)
-            {
-                localPosition.z += wrapDistance;
-                segmentCycles[i]++;
-                RefreshSegment(segment, i, segmentCycles[i]);
-            }
-
             segment.localPosition = localPosition;
         }
+
+        while (segments.Count > 0 && segments[0].localPosition.z <= recycleThreshold)
+        {
+            RecycleFrontSegment(step);
+        }
     }
 
-    private void RefreshSegment(Transform segment, int segmentIndex, int cycleIndex)
+    private float GetSegmentStep()
     {
-        for (int i = segment.childCount - 1; i >= 0; i--)
+        return Mathf.Max(0.01f, segmentLength);
+    }
+
+    private void RecycleFrontSegment(float step)
+    {
+        if (segments.Count <= 1)
         {
-            DestroySegmentChild(segment.GetChild(i).gameObject);
+            return;
         }
 
-        CreateFloor(segment);
-        CreateObstacleField(segment, segmentIndex, cycleIndex);
-    }
+        Transform recycledSegment = segments[0];
+        segments.RemoveAt(0);
 
-    private static void DestroySegmentChild(GameObject child)
-    {
+        Transform lastSegment = segments[segments.Count - 1];
+        float recycledZ = lastSegment.localPosition.z + step;
+
         if (Application.isPlaying)
         {
-            UnityEngine.Object.Destroy(child);
+            recycledSegment.gameObject.SetActive(false);
+            Destroy(recycledSegment.gameObject);
         }
         else
         {
-            UnityEngine.Object.DestroyImmediate(child);
+            DestroyImmediate(recycledSegment.gameObject);
         }
+
+        CreateSegment(nextSegmentId++, recycledZ);
     }
 
     private static void SetColor(GameObject target, Color color)

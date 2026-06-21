@@ -2,50 +2,95 @@ using UnityEngine;
 
 public class Stage1Projectile : MonoBehaviour
 {
-    [SerializeField] private float speed = 18f;
-    [SerializeField] private float lifetime = 2.5f;
+    [SerializeField] private float speed = 16f;
+    [SerializeField] private float lifetime = 3f;
+    [SerializeField] private int damage = 1;
 
-    private float deathTime;
-    private Rigidbody body;
+    private float age;
+    private bool hasHit;
 
-    private void Awake()
+    public void SetSpeed(float newSpeed)
     {
-        body = GetComponent<Rigidbody>();
-        deathTime = Time.time + lifetime;
+        speed = newSpeed;
     }
 
-    private void OnEnable()
+    public void SetLifetime(float newLifetime)
     {
-        if (body == null)
+        lifetime = newLifetime;
+    }
+
+    public void SetDamage(int newDamage)
+    {
+        damage = Mathf.Max(1, newDamage);
+    }
+
+    public int GetDamage()
+    {
+        return damage;
+    }
+
+    public bool TryConsumeHit()
+    {
+        if (hasHit)
         {
-            body = GetComponent<Rigidbody>();
+            return false;
         }
 
-        if (body != null)
-        {
-            body.useGravity = false;
-            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            body.linearVelocity = transform.forward * speed;
-        }
+        hasHit = true;
+        return true;
     }
 
     private void Update()
     {
-        if (Time.time >= deathTime)
+        Vector3 startPosition = transform.position;
+        Vector3 movement = transform.forward * (speed * Time.deltaTime);
+        Vector3 endPosition = startPosition + movement;
+
+        if (TryHitAlongPath(startPosition, endPosition, movement))
+        {
+            return;
+        }
+
+        transform.position = endPosition;
+
+        age += Time.deltaTime;
+        if (age >= lifetime)
         {
             Destroy(gameObject);
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private bool TryHitAlongPath(Vector3 startPosition, Vector3 endPosition, Vector3 movement)
     {
-        Stage1Obstacle obstacle = other.GetComponentInParent<Stage1Obstacle>();
-        if (obstacle == null)
+        float distance = movement.magnitude;
+        if (distance <= 0f)
         {
-            return;
+            return false;
         }
 
-        obstacle.TakeHit();
-        Destroy(gameObject);
+        if (Physics.SphereCast(startPosition, 0.15f, transform.forward, out RaycastHit hitInfo, distance, ~0, QueryTriggerInteraction.Ignore))
+        {
+            Stage1GreenTileTarget target = hitInfo.collider.GetComponentInParent<Stage1GreenTileTarget>();
+            if (target != null && TryConsumeHit())
+            {
+                target.TakeDamage(damage);
+                Destroy(gameObject);
+                return true;
+            }
+        }
+
+        Collider[] overlaps = Physics.OverlapSphere(endPosition, 0.2f, ~0, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Stage1GreenTileTarget target = overlaps[i].GetComponentInParent<Stage1GreenTileTarget>();
+            if (target != null && TryConsumeHit())
+            {
+                target.TakeDamage(damage);
+                Destroy(gameObject);
+                return true;
+            }
+        }
+
+        return false;
     }
 }
