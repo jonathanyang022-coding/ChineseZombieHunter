@@ -1,38 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteAlways]
 public class Stage1TrackBuilder : MonoBehaviour
 {
-    [SerializeField] private int segmentCount = 14;
+    [SerializeField] private int segmentCount = 16;
     [SerializeField] private float segmentLength = 4f;
     [SerializeField] private float scrollSpeed = 5f;
     [SerializeField] private float trackWidth = 6f;
-    [SerializeField] private float wallThickness = 0.25f;
-    [SerializeField] private float wallHeight = 1.8f;
-    [SerializeField] private float laneOffset = 1.6f;
 
-    [SerializeField] private Color floorColor = new Color(0.35f, 0.36f, 0.39f);
-    [SerializeField] private Color wallColor = new Color(0.16f, 0.47f, 0.82f);
-    [SerializeField] private Color laneMarkColor = new Color(0.82f, 0.82f, 0.82f);
-    [SerializeField] private Color obstacleColor = new Color(0.24f, 0.92f, 0.24f);
+    [SerializeField] private Color floorColor = new Color(0.22f, 0.23f, 0.26f);
+    [SerializeField] private Color obstacleColor = new Color(0.08f, 0.55f, 0.08f);
 
     private readonly List<Transform> segments = new List<Transform>();
-
-    private void OnEnable()
-    {
-        RebuildTrack();
-    }
-
-    private void OnValidate()
-    {
-        if (!isActiveAndEnabled)
-        {
-            return;
-        }
-
-        RebuildTrack();
-    }
+    private readonly List<int> segmentCycles = new List<int>();
 
     private void Awake()
     {
@@ -41,12 +21,10 @@ public class Stage1TrackBuilder : MonoBehaviour
 
     private void Update()
     {
-        if (!Application.isPlaying)
+        if (Application.isPlaying)
         {
-            return;
+            ScrollTrack();
         }
-
-        ScrollTrack();
     }
 
     private void RebuildTrack()
@@ -58,6 +36,7 @@ public class Stage1TrackBuilder : MonoBehaviour
     private void ClearTrack()
     {
         segments.Clear();
+        segmentCycles.Clear();
 
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
@@ -87,15 +66,10 @@ public class Stage1TrackBuilder : MonoBehaviour
         segmentRoot.transform.SetParent(transform, false);
         segmentRoot.transform.localPosition = new Vector3(0f, 0f, index * segmentLength);
         segments.Add(segmentRoot.transform);
+        segmentCycles.Add(0);
 
         CreateFloor(segmentRoot.transform);
-        CreateWalls(segmentRoot.transform);
-        CreateLaneMarkers(segmentRoot.transform);
-
-        if (index == 4 || index == 8 || index == 11)
-        {
-            CreateObstacle(segmentRoot.transform, index % 3 - 1);
-        }
+        CreateObstacleField(segmentRoot.transform, index, 0);
     }
 
     private void CreateFloor(Transform parent)
@@ -108,46 +82,55 @@ public class Stage1TrackBuilder : MonoBehaviour
         SetColor(floor, floorColor);
     }
 
-    private void CreateWalls(Transform parent)
+    private void CreateObstacleField(Transform parent, int segmentIndex, int cycleIndex)
     {
-        float wallX = trackWidth * 0.5f + wallThickness * 0.5f;
-        CreateWall(parent, "LeftWall", -wallX);
-        CreateWall(parent, "RightWall", wallX);
+        if (segmentIndex < 2)
+        {
+            return;
+        }
+
+        float[] xPositions = { -2.0f, -1.0f, 0f, 1.0f, 2.0f };
+        float[] zOffsets = { 0.85f, 1.65f, 2.45f, 3.25f };
+        int obstacleCount = 2 + ((segmentIndex + cycleIndex) % 3);
+        System.Random random = CreateRandom(parent.name, segmentIndex, cycleIndex);
+        List<int> availableLanes = new List<int> { 0, 1, 2, 3, 4 };
+
+        for (int i = 0; i < obstacleCount && availableLanes.Count > 0; i++)
+        {
+            int lanePick = random.Next(availableLanes.Count);
+            int laneIndex = availableLanes[lanePick];
+            availableLanes.RemoveAt(lanePick);
+
+            int depthPick = random.Next(zOffsets.Length);
+            CreateObstacle(parent, xPositions[laneIndex], zOffsets[depthPick]);
+        }
     }
 
-    private void CreateWall(Transform parent, string wallName, float xPosition)
+    private static System.Random CreateRandom(string segmentName, int segmentIndex, int cycleIndex)
     {
-        GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        wall.name = wallName;
-        wall.transform.SetParent(parent, false);
-        wall.transform.localScale = new Vector3(wallThickness, wallHeight, segmentLength);
-        wall.transform.localPosition = new Vector3(xPosition, wallHeight * 0.5f, 0f);
-        SetColor(wall, wallColor);
+        int seed = (segmentIndex + 1) * 1009 + cycleIndex * 131 + segmentName.GetHashCode();
+        return new System.Random(seed);
     }
 
-    private void CreateLaneMarkers(Transform parent)
-    {
-        CreateLaneMarker(parent, -laneOffset * 0.5f);
-        CreateLaneMarker(parent, laneOffset * 0.5f);
-    }
-
-    private void CreateLaneMarker(Transform parent, float xPosition)
-    {
-        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        marker.name = "LaneMarker";
-        marker.transform.SetParent(parent, false);
-        marker.transform.localScale = new Vector3(0.08f, 0.05f, segmentLength);
-        marker.transform.localPosition = new Vector3(xPosition, 0.03f, 0f);
-        SetColor(marker, laneMarkColor);
-    }
-
-    private void CreateObstacle(Transform parent, int laneIndex)
+    private void CreateObstacle(Transform parent, float xPosition, float zPosition)
     {
         GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
         obstacle.name = "Obstacle";
         obstacle.transform.SetParent(parent, false);
         obstacle.transform.localScale = new Vector3(0.8f, 1.0f, 0.8f);
-        obstacle.transform.localPosition = new Vector3(laneIndex * laneOffset, 0.5f, 0.2f);
+        obstacle.transform.localPosition = new Vector3(xPosition, 0.5f, zPosition);
+
+        Collider collider = obstacle.GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.isTrigger = true;
+        }
+
+        if (obstacle.GetComponent<Stage1Obstacle>() == null)
+        {
+            obstacle.AddComponent<Stage1Obstacle>();
+        }
+
         SetColor(obstacle, obstacleColor);
     }
 
@@ -155,6 +138,7 @@ public class Stage1TrackBuilder : MonoBehaviour
     {
         float moveDistance = scrollSpeed * Time.deltaTime;
         float wrapDistance = segmentCount * segmentLength;
+        float recycleThreshold = -segmentLength;
 
         for (int i = 0; i < segments.Count; i++)
         {
@@ -162,12 +146,37 @@ public class Stage1TrackBuilder : MonoBehaviour
             Vector3 localPosition = segment.localPosition;
             localPosition.z -= moveDistance;
 
-            while (localPosition.z <= -segmentLength)
+            while (localPosition.z <= recycleThreshold)
             {
                 localPosition.z += wrapDistance;
+                segmentCycles[i]++;
+                RefreshSegment(segment, i, segmentCycles[i]);
             }
 
             segment.localPosition = localPosition;
+        }
+    }
+
+    private void RefreshSegment(Transform segment, int segmentIndex, int cycleIndex)
+    {
+        for (int i = segment.childCount - 1; i >= 0; i--)
+        {
+            DestroySegmentChild(segment.GetChild(i).gameObject);
+        }
+
+        CreateFloor(segment);
+        CreateObstacleField(segment, segmentIndex, cycleIndex);
+    }
+
+    private static void DestroySegmentChild(GameObject child)
+    {
+        if (Application.isPlaying)
+        {
+            UnityEngine.Object.Destroy(child);
+        }
+        else
+        {
+            UnityEngine.Object.DestroyImmediate(child);
         }
     }
 
@@ -176,7 +185,7 @@ public class Stage1TrackBuilder : MonoBehaviour
         Renderer renderer = target.GetComponent<Renderer>();
         if (renderer != null)
         {
-            renderer.material.color = color;
+            Stage1Visuals.SetColor(renderer, color);
         }
     }
 }

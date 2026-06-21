@@ -1,23 +1,19 @@
 using UnityEngine;
 
-[ExecuteAlways]
 public class Stage1Bootstrap : MonoBehaviour
 {
-    [SerializeField] private Vector3 cameraPosition = new Vector3(0f, 3.4f, -8f);
+    [SerializeField] private Vector3 cameraPosition = new Vector3(0f, 3.8f, -8.5f);
     [SerializeField] private Vector3 cameraRotation = new Vector3(12f, 0f, 0f);
-    [SerializeField] private float cameraFieldOfView = 34f;
-    [SerializeField] private Color cameraBackgroundColor = new Color(0.36f, 0.38f, 0.42f);
+    [SerializeField] private float cameraFieldOfView = 40f;
+    [SerializeField] private Color cameraBackgroundColor = new Color(0.28f, 0.3f, 0.34f);
 
     [SerializeField] private Vector3 playerStartPosition = new Vector3(0f, 0.5f, 0f);
     [SerializeField] private Color playerColor = new Color(0.2f, 0.9f, 0.2f);
 
+    [SerializeField] private Color ambientColor = new Color(0.22f, 0.22f, 0.24f);
     [SerializeField] private Color lightColor = Color.white;
-    [SerializeField] private Vector3 lightRotation = new Vector3(50f, -30f, 0f);
-
-    private void OnEnable()
-    {
-        Bootstrap();
-    }
+    [SerializeField] private Vector3 lightRotation = new Vector3(45f, -30f, 0f);
+    [SerializeField] private float lightIntensity = 0.9f;
 
     private void Awake()
     {
@@ -28,6 +24,7 @@ public class Stage1Bootstrap : MonoBehaviour
     {
         EnsureCamera();
         EnsureDirectionalLight();
+        EnsureGameManager();
         EnsurePlayer();
     }
 
@@ -47,7 +44,7 @@ public class Stage1Bootstrap : MonoBehaviour
         sceneCamera.clearFlags = CameraClearFlags.SolidColor;
         sceneCamera.backgroundColor = cameraBackgroundColor;
         sceneCamera.nearClipPlane = 0.1f;
-        sceneCamera.farClipPlane = 100f;
+        sceneCamera.farClipPlane = 150f;
     }
 
     private void EnsureDirectionalLight()
@@ -65,9 +62,13 @@ public class Stage1Bootstrap : MonoBehaviour
         }
 
         directionalLight.type = LightType.Directional;
-        directionalLight.intensity = 1.2f;
+        directionalLight.intensity = lightIntensity;
         directionalLight.color = lightColor;
         lightObject.transform.rotation = Quaternion.Euler(lightRotation);
+
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = ambientColor;
+        RenderSettings.ambientIntensity = 0.35f;
     }
 
     private void EnsurePlayer()
@@ -83,16 +84,41 @@ public class Stage1Bootstrap : MonoBehaviour
         playerObject.transform.localScale = new Vector3(0.7f, 1.0f, 0.7f);
         playerObject.tag = "Player";
 
+        Rigidbody playerBody = playerObject.GetComponent<Rigidbody>();
+        if (playerBody == null)
+        {
+            playerBody = playerObject.AddComponent<Rigidbody>();
+        }
+
+        playerBody.useGravity = false;
+        playerBody.isKinematic = true;
+        playerBody.constraints = RigidbodyConstraints.FreezeRotation;
+
         Renderer renderer = playerObject.GetComponent<Renderer>();
         if (renderer != null)
         {
-            renderer.material.color = playerColor;
+            Stage1Visuals.SetColor(renderer, playerColor);
         }
 
         LaneRunnerController controller = playerObject.GetComponent<LaneRunnerController>();
         if (controller == null)
         {
             playerObject.AddComponent<LaneRunnerController>();
+        }
+    }
+
+    private void EnsureGameManager()
+    {
+        GameObject managerObject = GameObject.Find("Stage1GameManager");
+        if (managerObject == null)
+        {
+            managerObject = new GameObject("Stage1GameManager");
+        }
+
+        Stage1GameManager gameManager = managerObject.GetComponent<Stage1GameManager>();
+        if (gameManager == null)
+        {
+            managerObject.AddComponent<Stage1GameManager>();
         }
     }
 }
