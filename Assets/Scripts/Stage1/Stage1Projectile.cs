@@ -8,6 +8,7 @@ public class Stage1Projectile : MonoBehaviour
 
     private float age;
     private bool hasHit;
+    private Stage1Shooter ownerShooter;
 
     public void SetSpeed(float newSpeed)
     {
@@ -27,6 +28,16 @@ public class Stage1Projectile : MonoBehaviour
     public int GetDamage()
     {
         return damage;
+    }
+
+    public void SetOwnerShooter(Stage1Shooter shooter)
+    {
+        ownerShooter = shooter;
+    }
+
+    public Stage1Shooter GetOwnerShooter()
+    {
+        return ownerShooter;
     }
 
     public bool TryConsumeHit()
@@ -60,6 +71,16 @@ public class Stage1Projectile : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        TryHitCollider(other);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        TryHitCollider(collision.collider);
+    }
+
     private bool TryHitAlongPath(Vector3 startPosition, Vector3 endPosition, Vector3 movement)
     {
         float distance = movement.magnitude;
@@ -68,27 +89,71 @@ public class Stage1Projectile : MonoBehaviour
             return false;
         }
 
-        if (Physics.SphereCast(startPosition, 0.15f, transform.forward, out RaycastHit hitInfo, distance, ~0, QueryTriggerInteraction.Ignore))
+        if (Physics.SphereCast(startPosition, 0.15f, transform.forward, out RaycastHit hitInfo, distance, ~0, QueryTriggerInteraction.Collide))
         {
-            Stage1GreenTileTarget target = hitInfo.collider.GetComponentInParent<Stage1GreenTileTarget>();
-            if (target != null && TryConsumeHit())
+            if (TryHandleHit(hitInfo.collider, hitInfo.point, transform.forward))
             {
-                target.TakeDamage(damage);
-                Destroy(gameObject);
                 return true;
             }
         }
 
-        Collider[] overlaps = Physics.OverlapSphere(endPosition, 0.2f, ~0, QueryTriggerInteraction.Ignore);
+        Collider[] overlaps = Physics.OverlapSphere(endPosition, 0.2f, ~0, QueryTriggerInteraction.Collide);
         for (int i = 0; i < overlaps.Length; i++)
         {
-            Stage1GreenTileTarget target = overlaps[i].GetComponentInParent<Stage1GreenTileTarget>();
-            if (target != null && TryConsumeHit())
+            if (TryHandleHit(overlaps[i], endPosition, transform.forward))
             {
-                target.TakeDamage(damage);
-                Destroy(gameObject);
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    private bool TryHitCollider(Collider collider)
+    {
+        if (collider == null || hasHit)
+        {
+            return false;
+        }
+
+        if (TryHandleHit(collider, transform.position, transform.forward))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryHandleHit(Collider collider, Vector3 hitPoint, Vector3 travelDirection)
+    {
+        Stage1GoalGate goalGate = collider.GetComponentInParent<Stage1GoalGate>();
+        if (goalGate != null && !hasHit)
+        {
+            goalGate.ApplyProjectileHit(this, hitPoint, travelDirection);
+            if (TryConsumeHit())
+            {
+                Destroy(gameObject);
+            }
+            return true;
+        }
+
+        Stage1ClonePickup clonePickup = collider.GetComponentInParent<Stage1ClonePickup>();
+        if (clonePickup != null && !hasHit)
+        {
+            clonePickup.ApplyProjectileHit(this, hitPoint, travelDirection);
+            if (TryConsumeHit())
+            {
+                Destroy(gameObject);
+            }
+            return true;
+        }
+
+        Stage1GreenTileTarget target = collider.GetComponentInParent<Stage1GreenTileTarget>();
+        if (target != null && TryConsumeHit())
+        {
+            target.TakeDamage(damage);
+            Destroy(gameObject);
+            return true;
         }
 
         return false;

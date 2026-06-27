@@ -5,7 +5,6 @@ public class Stage1FirstLaneCharacter : MonoBehaviour
 {
     [SerializeField] private string chestWord = "中";
     [SerializeField] private string requiredLetter = "Z";
-    [SerializeField] private int playerCloneMultiplier = 3;
     [SerializeField] private Vector3 chestLabelLocalPosition = new Vector3(0f, 0.2f, 0.48f);
     [SerializeField] private Vector3 chestLabelShadowOffset = new Vector3(0.02f, -0.02f, 0f);
     [SerializeField] private Color chestTextColor = Color.white;
@@ -117,7 +116,7 @@ public class Stage1FirstLaneCharacter : MonoBehaviour
         label.fontStyle = FontStyle.Bold;
         label.color = color;
         label.text = text;
-        label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 
     private void RefreshChestText()
@@ -169,16 +168,6 @@ public class Stage1FirstLaneCharacter : MonoBehaviour
 
     private void SpawnPlayerClones()
     {
-        GameObject playerObject = GameObject.Find("Stage1Player");
-        if (playerObject == null)
-        {
-            return;
-        }
-
-        Stage1PlayerCloneEffect cloneEffect = playerObject.GetComponent<Stage1PlayerCloneEffect>();
-        if (cloneEffect != null)
-        {
-            cloneEffect.SpawnClones(Mathf.Max(0, playerCloneMultiplier - 1));
-        }
+        // This lane now only handles the visual solve/vanish behavior.
     }
 }

@@ -34,6 +34,15 @@ public class Stage1Bootstrap : MonoBehaviour
         EnsureWritingArea();
     }
 
+    private void Start()
+    {
+        Stage1PlayerCloneEffect cloneEffect = FindAnyObjectByType<Stage1PlayerCloneEffect>();
+        if (cloneEffect != null)
+        {
+            cloneEffect.ClearClones();
+        }
+    }
+
     private void EnsureCamera()
     {
         Camera sceneCamera = Camera.main;
@@ -89,7 +98,7 @@ public class Stage1Bootstrap : MonoBehaviour
         }
 
         playerObject.transform.position = playerStartPosition + Vector3.up * playAreaVerticalOffset;
-        playerObject.transform.localScale = new Vector3(0.7f, 1.0f, 0.7f);
+        playerObject.transform.localScale = new Vector3(0.7f, 0.5f, 0.7f);
         playerObject.tag = "Player";
 
         Rigidbody playerBody = playerObject.GetComponent<Rigidbody>();
@@ -124,6 +133,12 @@ public class Stage1Bootstrap : MonoBehaviour
         {
             playerObject.AddComponent<Stage1PlayerCloneEffect>();
         }
+
+        Stage1PlayerCloneEffect cloneEffect = playerObject.GetComponent<Stage1PlayerCloneEffect>();
+        if (cloneEffect != null)
+        {
+            cloneEffect.ClearClones();
+        }
     }
 
     private void RemoveCharacterEnemy()
@@ -136,14 +151,7 @@ public class Stage1Bootstrap : MonoBehaviour
 
         if (characterObject != null)
         {
-            if (Application.isPlaying)
-            {
-                Destroy(characterObject);
-            }
-            else
-            {
-                DestroyImmediate(characterObject);
-            }
+            Destroy(characterObject);
         }
     }
 

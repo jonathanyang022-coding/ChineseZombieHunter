@@ -137,7 +137,7 @@ public class Stage1GreenTileTarget : MonoBehaviour
         label.fontStyle = FontStyle.Bold;
         label.color = color;
         label.text = currentHealth.ToString();
-        label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
     }
 
     private void UpdateHealthLabel()
@@ -212,52 +212,7 @@ public class Stage1GreenTileTarget : MonoBehaviour
 
         yield return new WaitForSeconds(respawnDelay);
 
-        RollSpawnHealth();
-        UpdateHealthLabel();
-
-        if (targetRenderer != null)
-        {
-            targetRenderer.enabled = true;
-        }
-
-        if (healthLabelRoot != null)
-        {
-            healthLabelRoot.gameObject.SetActive(true);
-        }
-
-        Vector3 respawnStartScale = baseScale * 0.7f;
-        transform.localScale = respawnStartScale;
-        transform.localRotation = baseRotation;
-
-        float respawnElapsed = 0f;
-        while (respawnElapsed < respawnAnimationDuration)
-        {
-            float t = respawnElapsed / respawnAnimationDuration;
-            transform.localScale = Vector3.Lerp(respawnStartScale, baseScale, t);
-
-            if (targetMaterial != null)
-            {
-                targetMaterial.color = baseColor;
-            }
-
-            respawnElapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        transform.localScale = baseScale;
-        transform.localRotation = baseRotation;
-
-        if (targetMaterial != null)
-        {
-            targetMaterial.color = baseColor;
-        }
-
-        if (targetCollider != null)
-        {
-            targetCollider.enabled = true;
-        }
-
-        isDying = false;
+        Destroy(gameObject);
     }
 
     private void RollSpawnHealth()
